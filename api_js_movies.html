@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      /* body {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: wrap;
+      } */
+      #main{
+          display: grid;
+          grid-template-columns: 30% 30% 30%;
+          justify-content: center;
+      }
+      header {
+        width: 100%;
+        height: 50px;
+        background: rgb(38, 39, 38);
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        border-bottom: 1px solid #ccc;
+      }
+      header h1 {
+        margin: 0 20px;
+        color: #fff;
+      }
+      header a {
+        text-decoration: none;
+      }
+      header form {
+        display: flex;
+        align-items: center;
+      }
+      /* The search bar */
+      #search {
+        width: 230px;
+        height: 30px;
+        border: 1px solid black;
+        outline: none;
+        border-radius: 20px;
+        padding-left: 15px;
+      }
+      .el_div {
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        height: 350px;
+        width: 390px;
+        background-color: red;
+        border: 5px solid green;
+        margin: 20px;
+      }
+      .img_all {
+        margin: 0 50px;
+        height: 250px;
+        width: 250px;
+      }
+      .heading {
+        display: flex;
+        justify-content: center;
+      }
+
+      /* speak */
+      .speak{
+        margin-left: 1rem;
+        color: white;
+        font-size: 500;
+        background-color: red;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+      }
+      .speak:hover{
+        background-color: rgb(240, 21, 21);
+        cursor: pointer;
+      }
+      #action{
+        color: white;
+        font-size: 1rem;
+        background-color: grey
+      }
+
+    </style>
+  </head>
+
+
+
+  <body>
+    <header>
+      <a href="#"><h1>Movies</h1></a>
+      <form id="form">
+        <input type="text" id="search" placeholder="Search" class="search" />
+        <label class="speak" for="search" onclick="runSpeechRecognition()">Speak & Search</label>
+      </form>
+      <p id="action"></p>
+    </header>
+    <!-- The main tag where we are going to put all our movies that we got from the API -->
+    <main id="main"></main>
+
+
+
+
+
+
+
+
+    
+    <script>
+      // API information.
+      // const apiUrl =
+      //   "https://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&api_key=04c35731a5ee918f014970082a0088b1&page=1";
+      const apiUrl =
+        "https://www.omdbapi.com/?s=avengers&apikey=7880183f";
+      const IMGPATH = "https://image.tmdb.org/t/p/w1280";
+      const SEARCHAPI =
+        "https://api.themoviedb.org/3/search/movie?&api_key=04c35731a5ee918f014970082a0088b1&query=";
+      // Selecting our Elements.
+      const main = document.getElementById("main");
+      const form = document.getElementById("form");
+      const search = document.getElementById("search");
+      /* call the showMovies function that requests the movie data from the Api using fetch.
+ Then it puts those data in the main HTML tag by creating elments for those data. */
+      showMovies(apiUrl);
+      function showMovies(url) {
+        fetch(url)
+          .then(res => res.json())
+          .then(function (data) {
+            data.results.forEach(element => {
+              // Creating elemnts for our data inside the main tag.
+              const el = document.createElement("div");
+              el.className = "el_div";
+              const image = document.createElement("img");
+              image.className = "img_all";
+              const text = document.createElement("h2");
+              text.className = "heading";
+
+              text.innerHTML = `${element.title}`;
+              image.src = IMGPATH + element.poster_path;
+              el.appendChild(image);
+              el.appendChild(text);
+              main.appendChild(el);
+            });
+          });
+      }
+
+      // Prevent the Form from submitting if the search bar is empty.
+      form.addEventListener("submit", e => {
+        e.preventDefault();
+        main.innerHTML = "";
+
+        const searchTerm = search.value;
+        /* Adding the value wriiten in the search bar to the search Api,
+    in order to get the movies we search for. */
+        if (searchTerm) {
+          showMovies(SEARCHAPI + searchTerm);
+          search.value = "";
+        }
+      });
+
+      function ten_sec_search(){
+  
+      console.log("function");
+     
+        main.innerHTML = "";
+
+        const searchTerm = search.value;
+    
+        if (searchTerm) {
+          showMovies(SEARCHAPI + searchTerm);
+          search.value = "";
+        }
+      
+      }
+
+      
+
+      //speak recognition
+      function runSpeechRecognition() {
+		        // get output div reference
+		        var output = document.getElementById("search");
+		        // get action element reference
+		        var action = document.getElementById("action");
+                // new speech recognition object
+                var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+                var recognition = new SpeechRecognition();
+            
+                // This runs when the speech recognition service starts
+                recognition.onstart = function() {
+                    action.innerHTML = "<small>listening, please speak...</small>";
+                };
+                
+                recognition.onspeechend = function() {
+                    action.innerHTML = "<small>stopped listening, hope you are done...</small>";
+                    recognition.stop();
+                }
+              
+                // This runs when the speech recognition service returns result
+                recognition.onresult = function(event) {
+                    var transcript = event.results[0][0].transcript;
+                    var confidence = event.results[0][0].confidence;
+                    output.innerHTML = "<b>Text:</b> " + transcript + "<br/> <b>Confidence:</b> " + confidence*100+"%";
+                    console.log("text" + transcript);
+                console.log("confidence" + confidence*100);
+                search.value = transcript;
+                    // output.classList.remove("hide");
+                    setTimeout(() => {
+                      console.log("set time out");
+                      ten_sec_search();
+                    }, 1000);
+                };
+                
+              
+                 // start recognition
+                 recognition.start();
+	        }
+    </script>
+  </body>
+</html>
